@@ -18,15 +18,24 @@ const getAllUser = async(req,res,next) =>{
 }
 
 const signUp = async(req,res,next) =>{
-   const { name , email , password } = req.body;
+   const validator = require("validator");
+
+   const { name, email, password } = req.body;
+
+   if (!validator.isEmail(email)) {
+     return res.status(400).json({ message: "Invalid email format" });
+   }
+
+   const safeEmail = validator.normalizeEmail(email.trim());
 
    let existingUser;
-
-   try{
-    existingUser = await User.findOne({email})
-   }catch(e){
-    console.log(err);
+   try {
+     existingUser = await User.findOne({ email: safeEmail });
+   } catch (e) {
+     console.log(e);
+     return res.status(500).json({ message: "Something went wrong" });
    }
+
 
    if(existingUser){
        return res.status(400).json({message : "User is already exists!"})
@@ -45,27 +54,37 @@ const signUp = async(req,res,next) =>{
    catch(e){console.log(e);}
 }
 
-const logIn = async(req,res,next) => {
-    const {email , password} = req.body;
-    
-    let existingUser;
+const logIn = async (req, res, next) => {
+  const validator = require("validator");
+  const { email, password } = req.body;
 
-    try{
-     existingUser = await User.findOne({email})
-    }catch(e){
-     console.log(err);
-    }
-    if(!existingUser){
-        return res.status(404).json({message : "User is not found"})
-    }
+  if (!validator.isEmail(email)) {
+    return res.status(400).json({ message: "Invalid email format" });
+  }
 
-    const isPasswordCorrect = bcrypt.compareSync(password,existingUser.password);
+  const safeEmail = validator.normalizeEmail(email.trim());
 
-    if(!isPasswordCorrect){
-        return res.status(400).json({message: "Incorrect Password!"});
-    }
+  let existingUser;
 
-    return res.status(200).json({user: existingUser});
-}
+  try {
+    existingUser = await User.findOne({ email: safeEmail });
+  } catch (e) {
+    console.log(e);
+    return res.status(500).json({ message: "Something went wrong" });
+  }
+
+  if (!existingUser) {
+    return res.status(404).json({ message: "User is not found" });
+  }
+
+  const isPasswordCorrect = bcrypt.compareSync(password, existingUser.password);
+
+  if (!isPasswordCorrect) {
+    return res.status(400).json({ message: "Incorrect Password!" });
+  }
+
+  return res.status(200).json({ user: existingUser });
+};
+
 
 module.exports = { getAllUser, signUp , logIn};
