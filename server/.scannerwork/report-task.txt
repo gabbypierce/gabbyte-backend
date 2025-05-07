@@ -1,7 +1,7 @@
 organization=gabbypierce
 projectKey=gabbyte-backend
 serverUrl=https://sonarcloud.io
-serverVersion=8.0.0.62923
+serverVersion=8.0.0.63024
 dashboardUrl=https://sonarcloud.io/dashboard?id=gabbyte-backend
-ceTaskId=AZaS3wJ5L9KIIOCFoLZK
-ceTaskUrl=https://sonarcloud.io/api/ce/task?id=AZaS3wJ5L9KIIOCFoLZK
+ceTaskId=AZamlSp6tkIgiJgRiE6b
+ceTaskUrl=https://sonarcloud.io/api/ce/task?id=AZamlSp6tkIgiJgRiE6b

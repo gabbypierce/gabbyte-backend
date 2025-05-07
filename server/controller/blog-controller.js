@@ -1,175 +1,114 @@
+// controller/blog-controller.js
 const mongoose = require("mongoose");
-const { findByIdAndRemove } = require("../model/Blog");
 const Blog = require("../model/Blog");
 const User = require("../model/User");
 
-const getAllBlogs = async(req,res,next) =>{
-    let blogs;
-    try{
-        blogs = await Blog.find();
-    }catch(e){
-        console.log(e);
+const getAllBlogs = async (req, res) => {
+  try {
+    const blogs = await Blog.find();
+    if (!blogs || blogs.length === 0) {
+      return res.status(404).json({ message: "No blogs found" });
+    }
+    return res.status(200).json({ blogs });
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json({ message: "Unexpected Error Occurred" });
+  }
+};
+
+const addBlog = async (req, res) => {
+  const { title, description, image, user } = req.body;
+  try {
+    const existingUser = await User.findById(user);
+    if (!existingUser) {
+      return res.status(400).json({ message: "Unauthorized" });
     }
 
-    if(!blogs){
-        return res.status(404).json({message : " No blogs found"});
+    const session = await mongoose.startSession();
+    session.startTransaction()
+
+    const blog = new Blog({ title, description, image, user, date: new Date() });
+    await blog.save({ session });
+
+    existingUser.blogs.push(blog);
+    await existingUser.save({ session });
+
+    await session.commitTransaction();
+    session.endSession();
+
+    return res.status(200).json({ blog });
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json({ message: "Unexpected Error Occurred" });
+  }
+};
+
+const updateBlog = async (req, res) => {
+  const { id } = req.params;
+  try {
+    // Move destructuring inside try so missing req.body is caught
+    const { title, description } = req.body;
+    const blog = await Blog.findByIdAndUpdate(id, { title, description });
+    if (!blog) {
+      return res.status(500).json({ message: "Unable to update" });
     }
+    return res.status(200).json({ blog });
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json({ message: "Unexpected Error Occurred" });
+  }
+};
 
-    return res.status(200).json({blogs});
-}
-
-// const addBlog = async(req,res,next) =>{
-
-//     const { title , desc , img , user } = req.body;
-
-//     let existingUser;
-//     try {
-//         existingUser = await User.findById(user);
-//     } catch (e) {
-//         return console.log(e);
-//     }
-
-//     if(!existingUser){
-//         return res.status(400).json({message: " Unautorized"});
-//     }
-//     const blog = new Blog({
-//         title ,desc , img , user
-//     });
-
-//     try {
-//       const session = await mongoose.startSession();
-//       session.startTransaction();
-//       await  blog.save({session});
-//       existingUser.blogs.push(blog);
-//       await existingUser.save({session});
-//       await session.commitTransaction();
-//     } catch (e) {
-//        return res.status(500).json({message:e})
-//     }
-
-//     return res.status(200).json({blog});
-// }
-
-
-const addBlog = async(req,res,next) =>{
-
-    const { title , desc , img , user } = req.body;
-
-    const currentDate = new Date();
-
-    let existingUser;
-    try {
-        existingUser = await User.findById(user);
-    } catch (e) {
-        return console.log(e);
+const getById = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const blog = await Blog.findById(id);
+    if (!blog) {
+      return res.status(500).json({ message: "not found" });
     }
-        if(!existingUser){
-        return res.status(400).json({message: " Unautorized"});
+    return res.status(200).json({ blog });
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json({ message: "Unexpected Error Occurred" });
+  }
+};
+
+const deleteBlog = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const blog = await Blog.findByIdAndDelete(id);
+    if (!blog) {
+      return res.status(404).json({ message: "Blog not found" });
     }
+    const user = await User.findById(blog.user);
+    user.blogs.pull(blog);
+    await user.save();
+    return res.status(200).json({ message: "Blog Deleted" });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Unexpected Error Occurred" });
+  }
+};
 
-
-    const blog = new Blog({
-        title ,desc , img , user, date: currentDate
-    });
-
-    try {
-      await  blog.save();
-    } catch (e) {
-       return console.log(e);
-    }
-
-    try {
-        const session = await mongoose.startSession();
-        session.startTransaction();
-        await blog.save(session);
-        existingUser.blogs.push(blog);
-        await existingUser.save(session);
-        session.commitTransaction();
-      } catch (err) {
-        console.log(err);
-        return res.status(500).json({ message: err });
-      }
-    return res.status(200).json({blog});
-}
-
-const updateBlog = async(req,res,next) => {
-    const blogId = req.params.id;
-    const { title , desc  } = req.body;
-   
-    let blog;
-
-    try {
-         blog = await Blog.findByIdAndUpdate(blogId , {
-            title,
-            desc
-        });
-    } catch (e) {
-        return console.log(e);
-    }
-
-    if(!blog){
-        return res.status(500).json({message : "Unable to update"})
-    }
-    
-    return res.status(200).json({blog});
-}
-
-const getById = async (req,res,next) =>{
-    const id = req.params.id;
-    let blog;
-
-    try{
-        blog = await Blog.findById(id);
-    }
-    catch(e){
-        return console.log(e);
-    }
-
-    if(!blog){
-        return res.status(500).json({ message : "not found"});
-    }
-    
-    return res.status(200).json({blog});
-}
-
-const deleteBlog = async (req, res, next) => {
-
-    const id = req.params.id;
-    
-    try {
-        const blog = await Blog.findByIdAndDelete(id).populate('user');
-
-        if (!blog) {
-            return res.status(404).json({ message: "Blog not found" });
-        }
-
-        // Remove the blog from the user's blogs array
-        const user = blog.user;
-        user.blogs.pull(blog);
-        await user.save();
-
-        return res.status(200).json({ message: "Successfully deleted" });
-
-    } catch (e) {
-        console.error(e);
-        return res.status(500).json({ message: "Unable to delete" });
-
-    }
-}
-
-
-const getByUserId = async (req, res, next) => {
-    const userId = req.params.id;
-    let userBlogs;
-    try {
-      userBlogs = await User.findById(userId).populate("blogs");
-    } catch (err) {
-      return console.log(err);
-    }
-    if (!userBlogs) {
+const getByUserId = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const userWithBlogs = await User.findById(id);
+    if (!userWithBlogs) {
       return res.status(404).json({ message: "No Blog Found" });
     }
-    return res.status(200).json({ user: userBlogs });
-  };
+    return res.status(200).json({ user: userWithBlogs });
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json({ message: "Unexpected Error Occurred" });
+  }
+};
 
-module.exports = { getAllBlogs ,addBlog , updateBlog , getById ,deleteBlog , getByUserId} ;
+module.exports = {
+  getAllBlogs,
+  addBlog,
+  updateBlog,
+  getById,
+  deleteBlog,
+  getByUserId,
+};
