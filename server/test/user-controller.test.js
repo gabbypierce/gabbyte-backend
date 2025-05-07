@@ -1,4 +1,3 @@
-// test/user-controller.test.js
 const {
   signUp,
   logIn,
@@ -23,7 +22,6 @@ describe("User Controller", () => {
     };
   });
 
-  // --- signUp ---
   describe("signUp", () => {
     it("returns 201 and user on success", async () => {
       mockReq.body = { name: "Test", email: "t@e.com", password: "pwd" };
@@ -64,7 +62,6 @@ describe("User Controller", () => {
     });
   });
 
-  // --- logIn ---
   describe("logIn", () => {
     it("returns 200 on successful login", async () => {
       mockReq.body = { email: "t@e.com", password: "pwd" };
@@ -117,7 +114,6 @@ describe("User Controller", () => {
     });
   });
 
-  // --- getAllUsers & deleteUser ---
   describe("getAllUsers", () => {
     it("should return all users", async () => {
       const users = [{ name: "U1" }];

@@ -1,4 +1,3 @@
-// controller/blog-controller.js
 const mongoose = require("mongoose");
 const Blog = require("../model/Blog");
 const User = require("../model/User");

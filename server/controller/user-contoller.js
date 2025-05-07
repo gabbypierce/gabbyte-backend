@@ -1,19 +1,18 @@
-// controller/user‑controller.js
-const User      = require("../model/User");
-const bcrypt    = require("bcryptjs");
+const User = require("../model/User");
+const bcrypt = require("bcryptjs");
 const validator = require("validator");
 
 const signUp = async (req, res) => {
   try {
     const { name, email, password } = req.body;
 
-    // 1) Validate & normalize email
+    // Validate and normalize email
     if (!validator.isEmail(email)) {
       return res.status(400).json({ message: "Invalid email format" });
     }
     const safeEmail = email.trim().toLowerCase();
 
-    // 2) Check for existing user
+    // Check for existing user
     const filter = { email: safeEmail };
     // NOSONAR: email has been validated and normalized above
     const existingUser = await User.findOne(filter); // NOSONAR
@@ -21,7 +20,7 @@ const signUp = async (req, res) => {
       return res.status(400).json({ message: "User already exists" });
     }
 
-    // 3) Hash & create
+    // Hash and create
     const hashedPassword = bcrypt.hashSync(password);
     const user = new User({ name, email: safeEmail, password: hashedPassword });
     await user.save();
@@ -37,21 +36,20 @@ const logIn = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // 1) Validate & normalize email
+    // validate adn normalize email
     if (!validator.isEmail(email)) {
       return res.status(400).json({ message: "Invalid email format" });
     }
     const safeEmail = email.trim().toLowerCase();
 
-    // 2) Lookup user
+    // Lookup user
     const filter = { email: safeEmail };
-    // NOSONAR: email has been validated and normalized above
     const existingUser = await User.findOne(filter); // NOSONAR
     if (!existingUser) {
       return res.status(400).json({ message: "User not found" });
     }
 
-    // 3) Compare password
+    // compare password
     const isCorrect = bcrypt.compareSync(password, existingUser.password);
     if (!isCorrect) {
       return res.status(400).json({ message: "Incorrect password" });

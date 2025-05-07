@@ -10,7 +10,7 @@ describe("User Model Test", () => {
   });
 
   afterEach(async () => {
-    await User.deleteMany(); // Clear users after each test
+    await User.deleteMany();
   });
 
   afterAll(async () => {

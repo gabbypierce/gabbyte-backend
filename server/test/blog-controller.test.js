@@ -6,7 +6,7 @@ jest.mock("mongoose", () => {
   const actual = jest.requireActual("mongoose");
   return {
     ...actual,
-    Schema: actual.Schema, // ✅ Include Schema to avoid "Schema is not a constructor" error
+    Schema: actual.Schema,
     startSession: jest.fn().mockResolvedValue({
       startTransaction: jest.fn(),
       commitTransaction: jest.fn(),
@@ -15,7 +15,7 @@ jest.mock("mongoose", () => {
     }),
     Types: {
       ...actual.Types,
-      ObjectId: jest.fn(), // Mock ObjectId if needed
+      ObjectId: jest.fn(),
     },
   };
 });
@@ -145,7 +145,7 @@ describe("Blog Controller", () => {
       mockReq.params = { id: "abc" };
 
       const mockUser = {
-      blogs: { pull: jest.fn() },   // we only need the pull() method for this test
+      blogs: { pull: jest.fn() },
       save: jest.fn(),
       };
 
